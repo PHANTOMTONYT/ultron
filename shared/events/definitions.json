@@ -1,0 +1,39 @@
+{
+  "listening_started": {
+    "type": "listening_started"
+  },
+  "listening_stopped": {
+    "type": "listening_stopped"
+  },
+  "thinking_started": {
+    "type": "thinking_started"
+  },
+  "thinking_finished": {
+    "type": "thinking_finished"
+  },
+  "speech_started": {
+    "type": "speech_started"
+  },
+  "speech_finished": {
+    "type": "speech_finished"
+  },
+  "emotion_changed": {
+    "type": "emotion_changed",
+    "emotion": "idle | happy | sad | confused | celebrating | sleeping",
+    "intensity": "0.0 - 1.0"
+  },
+  "browser_context": {
+    "type": "browser_context",
+    "url": "string",
+    "title": "string",
+    "category": "YouTube | GitHub | Documentation | Shopping | Generic"
+  },
+  "user_input": {
+    "type": "user_input",
+    "text": "string"
+  },
+  "speech_amplitude": {
+    "type": "speech_amplitude",
+    "amplitude": "0.0 - 1.0"
+  }
+}

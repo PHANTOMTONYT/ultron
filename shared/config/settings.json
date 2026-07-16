@@ -1,0 +1,15 @@
+{
+  "websocket": {
+    "host": "localhost",
+    "port": 8765
+  },
+  "visualizer": {
+    "default_theme": "idle",
+    "particle_count": 500,
+    "glow_intensity": 1.2
+  },
+  "speech": {
+    "language": "en-IN",
+    "voice": "en-IN-NeerjaNeural"
+  }
+}

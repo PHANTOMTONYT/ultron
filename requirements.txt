@@ -1,0 +1,11 @@
+python-dotenv
+requests
+aiohttp
+browser-use
+playwright
+pydantic
+livekit
+livekit-agents
+edge-tts
+
+
