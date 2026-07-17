@@ -1,0 +1,1 @@
+# EDITH MCP Server Package

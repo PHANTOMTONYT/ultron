@@ -143,7 +143,7 @@ class DesktopCompanionApp:
         accumulated_pcm = bytearray()
         speaking = False
         silence_frames = 0
-        max_silence_frames = 60 # 60 frames * 20ms = 1.2 seconds of silence to trigger response
+        max_silence_frames = 35 # 35 frames * 20ms = 0.7 seconds of silence to trigger response
         
         try:
             async for frame_event in audio_stream:
@@ -390,45 +390,50 @@ class DesktopCompanionApp:
         await self.ws_server.broadcast(self.emotion_engine.set_state("speaking", 0.8))
         self.agent_speaking = True
 
-        for sentence in sentences:
+        async def synthesize_pcm(sentence: str) -> bytes:
+            lang = "hi-IN" if any(ord(char) > 127 for char in sentence) else "en-IN"
+            print(f"LiveKit Audio: Synthesizing sentence: '{sentence}'")
+            audio_b64 = await synthesize_speech(sentence, lang, speech_format="wav")
+            audio_bytes = base64.b64decode(audio_b64)
+            # RIFF WAV header is 44 bytes. Remaining bytes are 16kHz mono PCM.
+            return audio_bytes[44:]
+
+        # Kick off synthesis for the first sentence, then prefetch each following sentence's
+        # audio while the current one is still streaming out - otherwise the TTS network
+        # round-trip for sentence N+1 doesn't even start until sentence N has finished
+        # playing (real-time paced), producing an audible dead-air gap between every sentence.
+        next_audio_task = asyncio.create_task(synthesize_pcm(sentences[0]))
+
+        for i, sentence in enumerate(sentences):
             try:
-                # Broadcast the subtitles for this active sentence
                 await self.ws_server.broadcast({
-                    "type": "captions_overlay", 
-                    "text": sentence, 
+                    "type": "captions_overlay",
+                    "text": sentence,
                     "active": True
                 })
-                
-                # Fetch WAV audio from Sarvam
-                lang = "en-IN"
-                if any(ord(char) > 127 for char in sentence):
-                    lang = "hi-IN"
-                
-                print(f"LiveKit Audio: Synthesizing sentence: '{sentence}'")
-                audio_b64 = await synthesize_speech(sentence, lang, speech_format="wav")
-                audio_bytes = base64.b64decode(audio_b64)
-                
-                # RIFF WAV header is 44 bytes. Remaining bytes are 16kHz mono PCM.
-                pcm_data = audio_bytes[44:]
-                
+
+                pcm_data = await next_audio_task
+                if i + 1 < len(sentences):
+                    next_audio_task = asyncio.create_task(synthesize_pcm(sentences[i + 1]))
+
                 # Stream frames: 16000Hz * 0.02s * 2 bytes = 640 bytes per 20ms frame
                 chunk_size = 640
-                for i in range(0, len(pcm_data), chunk_size):
-                    chunk = pcm_data[i:i+chunk_size]
+                for j in range(0, len(pcm_data), chunk_size):
+                    chunk = pcm_data[j:j+chunk_size]
                     if len(chunk) < chunk_size:
                         # Pad last frame
                         chunk = chunk + b'\x00' * (chunk_size - len(chunk))
-                        
+
                     frame = rtc.AudioFrame(
                         data=chunk,
                         sample_rate=16000,
                         num_channels=1,
                         samples_per_channel=320 # 16000 * 0.02
                     )
-                    
+
                     await self.lk_audio_source.capture_frame(frame)
                     await asyncio.sleep(0.02) # Pace the frames
-                    
+
             except Exception as e:
                 print(f"LiveKit: Error in TTS stream: {e}")
 
