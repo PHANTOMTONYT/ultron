@@ -1,0 +1,115 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at center, #10162b 0%, #05070f 100%);
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#card {
+  width: 360px;
+  padding: 28px;
+  background: rgba(10, 15, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  text-align: center;
+}
+
+h1 {
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #00f2fe;
+  text-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+  margin-bottom: 8px;
+}
+
+#status {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 20px;
+}
+
+button {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid rgba(0, 242, 254, 0.5);
+  border-radius: 8px;
+  background: rgba(0, 242, 254, 0.12);
+  color: #00f2fe;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  background: rgba(0, 242, 254, 0.25);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+button.active {
+  background: rgba(225, 0, 255, 0.22);
+  border-color: #e100ff;
+  color: #e100ff;
+}
+
+#transcript {
+  margin-top: 16px;
+  max-height: 220px;
+  overflow-y: auto;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+}
+
+#transcript .line {
+  margin-bottom: 8px;
+}
+
+#transcript .line .who {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+#transcript .line.user .who { color: #e100ff; }
+#transcript .line.assistant .who { color: #00f2fe; }
+
+#transcript .line .text {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#log {
+  margin-top: 16px;
+  max-height: 160px;
+  overflow-y: auto;
+  text-align: left;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+}
+
+#log div {
+  margin-bottom: 4px;
+}

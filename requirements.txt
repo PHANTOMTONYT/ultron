@@ -1,11 +1,17 @@
 python-dotenv
 requests
 aiohttp
+httpx
 browser-use
 playwright
 pydantic
 livekit
 livekit-agents
+livekit-plugins-google
+livekit-plugins-openai
+livekit-plugins-sarvam
+livekit-plugins-silero
 edge-tts
+mcp
 
 

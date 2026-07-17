@@ -29,11 +29,13 @@ from livekit.plugins import google as lk_google, openai as lk_openai, sarvam, si
 # ---------------------------------------------------------------------------
 
 STT_PROVIDER       = "sarvam"
-LLM_PROVIDER       = "gemini"
+LLM_PROVIDER       = "openrouter"
 TTS_PROVIDER       = "sarvam"
 
 GEMINI_LLM_MODEL   = "gemini-2.5-flash"
 OPENAI_LLM_MODEL   = "gpt-4o"
+SARVAM_LLM_MODEL   = "sarvam-30b"
+OPENROUTER_LLM_MODEL = "google/gemini-2.5-flash"
 
 OPENAI_TTS_MODEL   = "tts-1"
 OPENAI_TTS_VOICE   = "nova"       # "nova" has a clean, confident female tone
@@ -224,6 +226,29 @@ def _build_llm():
     elif LLM_PROVIDER == "gemini":
         logger.info("LLM → Google Gemini (%s)", GEMINI_LLM_MODEL)
         return lk_google.LLM(model=GEMINI_LLM_MODEL, api_key=os.getenv("GOOGLE_API_KEY"))
+    elif LLM_PROVIDER == "sarvam":
+        logger.info("LLM → Sarvam (%s, OpenAI-compatible)", SARVAM_LLM_MODEL)
+        # Sarvam's chat completions endpoint is OpenAI-compatible, so the OpenAI
+        # plugin talks to it directly via base_url - same pattern used for the
+        # browser-use agent's LLM in backend/browser/tracker.py.
+        return lk_openai.LLM(
+            model=SARVAM_LLM_MODEL,
+            api_key=os.getenv("SARVAM_API_KEY"),
+            base_url="https://api.sarvam.ai/v1",
+        )
+    elif LLM_PROVIDER == "openrouter":
+        logger.info("LLM → OpenRouter (%s, OpenAI-compatible)", OPENROUTER_LLM_MODEL)
+        # OpenRouter is OpenAI-compatible, same pattern as backend/conversation/brain.py
+        # and backend/browser/tracker.py's OpenRouter integration.
+        return lk_openai.LLM(
+            model=OPENROUTER_LLM_MODEL,
+            api_key=os.getenv("Open_Router_Api_Key"),
+            base_url="https://openrouter.ai/api/v1",
+            extra_headers={
+                "HTTP-Referer": "http://localhost:8765",
+                "X-Title": "EDITH Voice Agent",
+            },
+        )
     else:
         raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER!r}")
 
@@ -325,6 +350,19 @@ async def entrypoint(ctx: JobContext) -> None:
         turn_detection=_turn_detection(),
         min_endpointing_delay=_endpointing_delay(),
     )
+
+    def _on_conversation_item_added(ev) -> None:
+        # Mirror every turn (user + agent) to the room as a data message so any
+        # connected web frontend can render a live transcript.
+        import json
+
+        payload = json.dumps({"role": ev.item.role, "text": ev.item.text_content or ""})
+        try:
+            ctx.room.local_participant.publish_data(payload, reliable=True, topic="transcript")
+        except Exception:
+            logger.warning("Failed to publish transcript line", exc_info=True)
+
+    session.on("conversation_item_added", _on_conversation_item_added)
 
     await session.start(
         agent=EdithAgent(stt=stt, llm=llm, tts=tts),

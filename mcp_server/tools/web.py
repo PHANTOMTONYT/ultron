@@ -6,7 +6,11 @@ import httpx
 import xml.etree.ElementTree as ET
 import asyncio  # Required for parallel execution
 import re
+import webbrowser
+from urllib.parse import quote_plus
 from datetime import datetime
+
+from mcp_server import state
 
 SEED_FEEDS = [
     'https://feeds.bbci.co.uk/news/world/rss.xml',
@@ -87,7 +91,9 @@ def register(mcp):
             report.append(f"{entry['summary']}")
             report.append(f"Link: {entry['link']}\n")
 
-        return "\n".join(report)
+        report_text = "\n".join(report)
+        state.set_cached("world_news", report_text)
+        return report_text
 
     @mcp.tool()
     async def get_world_finance_news() -> str:
@@ -110,12 +116,22 @@ def register(mcp):
             report.append(f"{entry['summary']}")
             report.append(f"Link: {entry['link']}\n")
 
-        return "\n".join(report)
+        report_text = "\n".join(report)
+        state.set_cached("finance_news", report_text)
+        return report_text
 
     @mcp.tool()
     async def search_web(query: str) -> str:
-        """Search the web for a given query and return a summary of results."""
-        return f"[stub] Search results for: {query}"
+        """
+        Opens a web search for the given query in the system's default browser.
+        Use this when the user wants to search the web for something.
+        """
+        url = f"https://www.google.com/search?q={quote_plus(query)}"
+        try:
+            webbrowser.open(url)
+            return f"Pulling up search results for '{query}' on your screen now, sir."
+        except Exception as e:
+            return f"I couldn't open the search results: {str(e)}"
 
     @mcp.tool()
     async def fetch_url(url: str) -> str:
@@ -131,9 +147,12 @@ def register(mcp):
         Opens the World Monitor dashboard (worldmonitor.app) in the system's web browser.
         Use this when the user wants a visual overview of global events or a real-time map.
         """
-        import webbrowser
-        url = "https://worldmonitor.app/"
-        
+        url = (
+            "https://www.worldmonitor.app/dashboard?zoom=1.00&view=global&timeRange=7d"
+            "&layers=conflicts%2Cbases%2Chotspots%2Cnuclear%2Csanctions%2Cweather"
+            "%2Ceconomic%2Cwaterways%2Coutages%2Cmilitary%2Cnatural"
+        )
+
         try:
             webbrowser.open(url)
             return "Displaying the World Monitor on your primary screen now, sir."
@@ -146,11 +165,25 @@ def register(mcp):
         Opens the Finance World Monitor dashboard (finance.worldmonitor.app) in the system's web browser.
         Use this when the user wants a visual overview of global financial markets and trends.
         """
-        import webbrowser
         url = "https://finance.worldmonitor.app/"
 
         try:
             webbrowser.open(url)
             return "Displaying the Finance World Monitor on your primary screen now, sir."
         except Exception as e:
-            return f"I'm unable to initialize the visual monitor: {str(e)}"
+            return f"I'm unable to initialize the finance monitor: {str(e)}"
+
+    @mcp.tool()
+    async def open_trading_view() -> str:
+        """
+        Opens the TradingView markets dashboard in the system's web browser.
+        Use this when the user wants a visual, real-time view of stock/market data
+        rather than a spoken summary - e.g. "pull up the markets" or "show me TradingView."
+        """
+        url = "https://in.tradingview.com/markets/"
+
+        try:
+            webbrowser.open(url)
+            return "Pulling up TradingView on your primary screen now, sir."
+        except Exception as e:
+            return f"I'm unable to initialize the markets view: {str(e)}"

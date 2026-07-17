@@ -63,19 +63,26 @@ canvas:active {
   height: 32px;
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
-  border: 1px border rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.35;
   pointer-events: auto;
   transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
 }
 
 body:hover .settings-trigger {
   opacity: 1;
+}
+
+/* Touch devices can't trigger :hover, so the gear must stay reachable without it */
+@media (hover: none) {
+  .settings-trigger {
+    opacity: 0.6;
+  }
 }
 
 .settings-trigger:hover {
