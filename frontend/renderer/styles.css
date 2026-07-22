@@ -9,13 +9,25 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background: radial-gradient(circle at center, #10162b 0%, #05070f 100%);
+  background: #05070f;
   overflow: hidden;
   width: 100vw;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+}
+
+/* Fullscreen ASCII Background Canvas */
+#ascii-bg-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* Container for visualizer canvas */
@@ -27,6 +39,7 @@ body {
   justify-content: center;
   align-items: center;
   pointer-events: none; /* Let clicks fall through initially */
+  z-index: 10;
 }
 
 canvas {
@@ -61,21 +74,26 @@ canvas:active {
   right: 15px;
   width: 32px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  opacity: 0.35;
+  opacity: 0.5;
   pointer-events: auto;
-  transition: opacity 0.3s ease, background 0.2s ease, transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 20;
 }
 
-body:hover .settings-trigger {
+.settings-trigger:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
   opacity: 1;
+  transform: rotate(45deg);
 }
 
 /* Touch devices can't trigger :hover, so the gear must stay reachable without it */
@@ -99,26 +117,30 @@ body:hover .settings-trigger {
 /* Glassmorphism Settings Panel */
 .settings-panel {
   position: absolute;
-  bottom: 15px;
-  left: 15px;
+  top: 15px;
   right: 15px;
-  background: rgba(10, 15, 30, 0.75);
+  bottom: 15px;
+  width: 320px;
+  background: rgba(10, 15, 25, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 16px;
+  padding: 20px;
   color: #fff;
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateX(30px);
   pointer-events: none;
   transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
 }
 
 .settings-panel.open {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 
@@ -126,9 +148,9 @@ body:hover .settings-trigger {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 12px;
 }
 
 .panel-header h3 {
@@ -152,69 +174,70 @@ body:hover .settings-trigger {
 
 /* Panel Content styling */
 .control-group {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .control-group label {
   display: block;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
 .theme-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .btn-state {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
   font-family: inherit;
-  font-size: 10px;
-  padding: 6px 4px;
+  font-size: 11px;
+  padding: 8px 6px;
   cursor: pointer;
   text-align: center;
   transition: all 0.2s ease;
 }
 
 .btn-state:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
   color: #fff;
 }
 
 .btn-state.active {
-  background: rgba(0, 242, 254, 0.2);
-  border-color: #00f2fe;
+  background: rgba(0, 242, 254, 0.10);
+  border-color: rgba(0, 242, 254, 0.5);
   color: #00f2fe;
-  text-shadow: 0 0 5px rgba(0, 242, 254, 0.5);
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
 }
 
 /* Chat Input inside settings */
 .chat-box {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
 }
 
 /* Primary, always-visible mic control - anchored just below Baymax, never hidden */
 .mic-main-btn {
   position: absolute;
-  bottom: -74px;
+  bottom: -80px;
   left: 50%;
   transform: translateX(-50%);
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   padding: 0;
   border-radius: 50%;
-  background: rgba(0, 242, 254, 0.12);
-  border: 2px solid rgba(0, 242, 254, 0.55);
+  background: rgba(0, 242, 254, 0.08);
+  border: 1px solid rgba(0, 242, 254, 0.4);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -223,29 +246,31 @@ body:hover .settings-trigger {
   cursor: pointer;
   pointer-events: auto; /* Override #container's pointer-events: none */
   z-index: 20;
-  box-shadow: 0 0 20px rgba(0, 242, 254, 0.35), 0 4px 16px rgba(0, 0, 0, 0.45);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.2), 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mic-main-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   fill: #00f2fe;
   transition: fill 0.2s ease;
 }
 
 .mic-main-btn:hover {
-  background: rgba(0, 242, 254, 0.2);
-  transform: translateX(-50%) scale(1.06);
+  background: rgba(0, 242, 254, 0.15);
+  border-color: rgba(0, 242, 254, 0.7);
+  box-shadow: 0 0 25px rgba(0, 242, 254, 0.4), 0 6px 18px rgba(0, 0, 0, 0.4);
+  transform: translateX(-50%) scale(1.05);
 }
 
 .mic-main-btn:active {
-  transform: translateX(-50%) scale(0.94);
+  transform: translateX(-50%) scale(0.95);
 }
 
 .mic-main-btn.listening {
-  background: rgba(225, 0, 255, 0.22);
-  border-color: #e100ff;
+  background: rgba(225, 0, 255, 0.15);
+  border-color: rgba(225, 0, 255, 0.6);
   animation: mic-main-pulse 1.3s ease-in-out infinite;
 }
 
@@ -254,46 +279,48 @@ body:hover .settings-trigger {
 }
 
 @keyframes mic-main-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(225, 0, 255, 0.4), 0 4px 16px rgba(0, 0, 0, 0.45); }
-  50% { box-shadow: 0 0 38px rgba(225, 0, 255, 0.8), 0 4px 16px rgba(0, 0, 0, 0.45); }
+  0%, 100% { box-shadow: 0 0 15px rgba(225, 0, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 0 30px rgba(225, 0, 255, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35); }
 }
 
 .chat-box input {
-  flex-grow: 1;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   color: #fff;
   font-family: inherit;
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   outline: none;
-  transition: border 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .chat-box input:focus {
-  border-color: #00f2fe;
+  border-color: rgba(0, 242, 254, 0.5);
 }
 
 .chat-box button {
-  background: #00f2fe;
-  color: #0c0f1d;
-  border: none;
+  width: 100%;
+  background: rgba(0, 242, 254, 0.1);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.4);
   border-radius: 8px;
   font-family: inherit;
   font-weight: 600;
   font-size: 12px;
-  padding: 0 16px;
+  padding: 10px;
   cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  transition: all 0.2s ease;
 }
 
 .chat-box button:hover {
-  opacity: 0.9;
+  background: rgba(0, 242, 254, 0.2);
+  color: #fff;
 }
 
 .chat-box button:active {
-  transform: scale(0.95);
+  transform: scale(0.98);
 }
 
 /* Status bar */
@@ -302,9 +329,9 @@ body:hover .settings-trigger {
   justify-content: space-between;
   font-size: 10px;
   color: rgba(255, 255, 255, 0.4);
-  margin-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 8px;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
 }
 
 .status-dot {
@@ -324,19 +351,24 @@ body:hover .settings-trigger {
 /* Captions / STT Overlay */
 #captions-overlay {
   position: absolute;
-  bottom: 25px;
-  left: 20px;
-  right: 20px;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 80%;
+  width: max-content;
   text-align: center;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  font-weight: 300;
+  font-weight: 400;
   pointer-events: none;
-  background: rgba(0,0,0,0.4);
-  padding: 8px 12px;
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
+  background: rgba(10, 15, 25, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 16px;
+  border-radius: 12px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   display: none;
 }
 

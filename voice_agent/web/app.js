@@ -1,4 +1,9 @@
 import { Room, RoomEvent, Track } from 'https://esm.sh/livekit-client@2.0.4';
+import ASCIIBackground from './ascii_bg.js';
+
+// Initialize ASCII Background
+const bgCanvas = document.getElementById('ascii-bg-canvas');
+const asciiBg = new ASCIIBackground(bgCanvas);
 
 const statusEl = document.getElementById('status');
 const connectBtn = document.getElementById('connect-btn');
@@ -14,7 +19,7 @@ function addTranscriptLine(role, text) {
 
   const who = document.createElement('span');
   who.className = 'who';
-  who.textContent = role === 'user' ? 'You' : 'EDITH';
+  who.textContent = role === 'user' ? 'You' : 'Desi Jarvis';
 
   const body = document.createElement('span');
   body.className = 'text';
@@ -104,7 +109,7 @@ async function connect() {
     muteBtn.disabled = false;
     muteBtn.textContent = 'Mute';
     connectBtn.textContent = 'Connected';
-    log('Microphone published. Start talking to EDITH.');
+    log('Microphone published. Start talking to Desi Jarvis.');
   } catch (e) {
     setStatus('Connection failed: ' + e.message);
     log('Error: ' + e.message);
@@ -120,4 +125,9 @@ muteBtn.addEventListener('click', async () => {
   await room.localParticipant.setMicrophoneEnabled(micEnabled);
   muteBtn.textContent = micEnabled ? 'Mute' : 'Unmute';
   muteBtn.classList.toggle('active', !micEnabled);
+});
+
+// Handle resize events
+window.addEventListener('resize', () => {
+  asciiBg.resize(window.innerWidth, window.innerHeight);
 });

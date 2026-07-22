@@ -22,9 +22,13 @@ from aiohttp import web
 from dotenv import load_dotenv
 from livekit import api
 
+import mimetypes
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
+
 load_dotenv()
 
-ROOM_NAME = "edith-voice-room"
+ROOM_PREFIX = "edith-voice"
 WEB_DIR = Path(__file__).resolve().parent
 PORT = int(os.getenv("VOICE_WEB_PORT", 8090))
 
@@ -39,15 +43,20 @@ async def handle_token(request):
             {"error": "LiveKit credentials not configured on the server."}, status=500
         )
 
+    # A fresh room name per connection - reusing one fixed room name means a
+    # second connection reuses an already-created room, which never fires the
+    # LiveKit "room created" event that automatic agent dispatch relies on, so
+    # the worker never gets a job for it (registers fine, does nothing).
+    room_name = f"{ROOM_PREFIX}-{uuid.uuid4().hex[:8]}"
     identity = f"web-user-{uuid.uuid4().hex[:8]}"
     token = (
         api.AccessToken(LK_API_KEY, LK_API_SECRET)
         .with_identity(identity)
         .with_name("EDITH Web User")
-        .with_grants(api.VideoGrants(room_join=True, room=ROOM_NAME))
+        .with_grants(api.VideoGrants(room_join=True, room=room_name))
         .to_jwt()
     )
-    return web.json_response({"token": token, "url": LK_URL, "room": ROOM_NAME})
+    return web.json_response({"token": token, "url": LK_URL, "room": room_name})
 
 
 async def handle_index(request):
@@ -61,7 +70,7 @@ def main():
     app.router.add_static("/", WEB_DIR, show_index=False)
 
     print(f"EDITH Voice Web: Serving on http://localhost:{PORT}")
-    print(f"EDITH Voice Web: Room '{ROOM_NAME}' - make sure voice_agent/agent.py is running in 'dev' mode.")
+    print(f"EDITH Voice Web: Each connection gets a fresh '{ROOM_PREFIX}-*' room - make sure voice_agent/agent.py is running in 'dev' mode.")
     web.run_app(app, host="localhost", port=PORT, print=None)
 
 

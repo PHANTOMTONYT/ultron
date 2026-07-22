@@ -27,6 +27,14 @@ FINANCE_SEED_FEEDS = [
     'https://rss.nytimes.com/services/xml/rss/nyt/Business.xml',  # NYT Business
 ]
 
+INDIA_FINANCE_SEED_FEEDS = [
+    'https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms',  # Economic Times Markets
+    'https://www.moneycontrol.com/rss/marketreports.xml',                   # Moneycontrol Market Reports
+    'https://www.moneycontrol.com/rss/business.xml',                        # Moneycontrol Business
+    'https://www.livemint.com/rss/markets',                                 # LiveMint Markets
+    'https://www.thehindubusinessline.com/markets/feeder/default.rss',      # The Hindu BusinessLine Markets
+]
+
 async def fetch_and_parse_feed(client, url):
     """Helper function to handle a single feed request and parse its XML."""
     try:
@@ -123,8 +131,14 @@ def register(mcp):
     @mcp.tool()
     async def search_web(query: str) -> str:
         """
-        Opens a web search for the given query in the system's default browser.
-        Use this when the user wants to search the web for something.
+        Opens a plain Google search-results page for `query` in the user's default
+        system browser. This does not navigate anywhere beyond the search page, click
+        into any result, or read anything back - it just puts a search page on screen.
+
+        Use ONLY when the user wants to browse search results themselves and does not
+        name a specific site and does not need you to find/read/act on anything. If the
+        user names a site ("open youtube", "check reddit") or wants an answer read back
+        ("search for X and tell me"), use browse_web instead.
         """
         url = f"https://www.google.com/search?q={quote_plus(query)}"
         try:
@@ -187,3 +201,44 @@ def register(mcp):
             return "Pulling up TradingView on your primary screen now, sir."
         except Exception as e:
             return f"I'm unable to initialize the markets view: {str(e)}"
+
+    @mcp.tool()
+    async def get_indian_market_news() -> str:
+        """
+        Fetches the latest Indian stock market and business headlines from major
+        Indian financial outlets simultaneously. Use this when the user asks what's
+        happening in India, in the Indian stock market, Sensex/Nifty, or Indian economy.
+        """
+        async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
+            tasks = [fetch_and_parse_feed(client, url) for url in INDIA_FINANCE_SEED_FEEDS]
+            results_of_lists = await asyncio.gather(*tasks)
+            all_articles = [item for sublist in results_of_lists for item in sublist]
+
+        if not all_articles:
+            return "The Indian market feeds are unresponsive right now, sir. I can't pull headlines."
+
+        report = ["### INDIAN MARKET BRIEFING (LIVE)\n"]
+        for entry in all_articles[:12]:
+            report.append(f"**[{entry['source']}]** {entry['title']}")
+            report.append(f"{entry['summary']}")
+            report.append(f"Link: {entry['link']}\n")
+
+        report_text = "\n".join(report)
+        state.set_cached("indian_market_news", report_text)
+        return report_text
+
+    @mcp.tool()
+    async def open_indian_markets() -> str:
+        """
+        Opens the Screener.in Indian markets explorer in the system's web browser.
+        Use this when the user asks what's happening in India, in the Indian stock
+        market, or wants a visual overview of Indian companies/sectors/markets -
+        e.g. "what's happening in India" or "pull up the Indian markets."
+        """
+        url = "https://www.screener.in/explore/"
+
+        try:
+            webbrowser.open(url)
+            return "Pulling up the Indian markets on your primary screen now, sir."
+        except Exception as e:
+            return f"I'm unable to initialize the Indian markets view: {str(e)}"

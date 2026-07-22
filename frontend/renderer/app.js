@@ -2,7 +2,12 @@ import { Room, RoomEvent, Track } from 'https://esm.sh/livekit-client@2.0.4';
 import CompanionVisualizer from './visualizer.js';
 import AudioHandler from './audio_handler.js';
 import WSClient from '../websocket/client.js';
+import ASCIIBackground from './ascii_bg.js';
 
+
+// 0. Initialize ASCII Background
+const bgCanvas = document.getElementById('ascii-bg-canvas');
+const asciiBg = new ASCIIBackground(bgCanvas);
 
 // 1. Initialize Visualizer
 const canvas = document.getElementById('visualizer-canvas');
@@ -341,4 +346,5 @@ frameUpdate();
 // Handle window resizing
 window.addEventListener('resize', () => {
   visualizer.resize(window.innerWidth, window.innerHeight);
+  asciiBg.resize(window.innerWidth, window.innerHeight);
 });
